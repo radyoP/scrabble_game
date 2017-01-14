@@ -216,7 +216,7 @@ class Game:
 
 class Player:
     """
-    Class to wrap Player class. There sure is better way, but I was to lazy too do something better
+    Class to wrap Player class. There sure is better way, but I was too lazy to do something better
     It remembers player's hand and score
     """
     def __init__(self, player):
