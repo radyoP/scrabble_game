@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if args.ignore_time:
         print("Ignoring time")
     if args.tournament == 0:
-        one_game(args.ignore_time)
+        one_game(args)
     else:
         print("Number of iterations:",args.tournament)
         res = tournament(args)
