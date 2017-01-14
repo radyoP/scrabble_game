@@ -1,11 +1,12 @@
 import collections
 import random
+import time
 import trie
 import scrabble_tools
 
 
 class Game:
-    def __init__(self, player0, player1):
+    def __init__(self, player0, player1, ignore_time = False):
         self.board = [
         ["*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*"],
         ["*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*"],
@@ -96,9 +97,12 @@ class Game:
         self.player1.hand = self.give_letters(self.player1.hand)
         self.move_num = 0
         self.last_moves_strings = 4*[False]
+        self.ignore_time = ignore_time
 
         with open("dictionary.txt", "r") as file:
-            words = [line[:-1] for line in file]
+            words = list()
+            for line in file:
+                words.append(line[:-1])
         self.valid_words = trie.Trie(words)
 
     def play(self):
@@ -106,12 +110,13 @@ class Game:
         while not self.end_of_game():
             try:
                 self.move(player)
-            except ValueError:
+            except (ValueError, TimeoutError):
                 if player == self.player0:
                     print("Player0 loses. Game terminated")
+                    return "p1"
                 else:
                     print("Player1 loses. Game terminated")
-                exit()
+                    return "p0"
             except IndexError:
                 self.move_num += 1
                 player = self.other_player(player)
@@ -120,37 +125,49 @@ class Game:
             player = self.other_player(player)
         print("End of the game")
         if self.player0.score > self.player1.score:
-            print("Player0 wins!")
+            return "p0"
         elif self.player0.score < self.player1.score:
-            print("Player1 wins!")
+            return "p1"
         else:
-            print("It's a draw!")
+            return "draw"
 
     def end_of_game(self):
-        return set(self.letters_bag) == {} or (False not in self.last_moves_strings)
+        if set(self.letters_bag) == {} or (False not in self.last_moves_strings):
+            return True
+        else:
+            return False
 
     def other_player(self, player):
-        return self.player1 if player == self.player0 else self.player0
+        if player == self.player0:
+            return self.player1
+        else:
+            return self.player0
 
     def move(self, player):
+        t1 = time.time()
         move = player.player.play(self.board, player.hand)
+        t2 = time.time()
+        if not self.ignore_time and t2 - t1 > 10:
+            print("I'm not gonna wait that long!")
+            raise TimeoutError
         if isinstance(move[0], str):
+            print("\n\n    Player wants to change letters: "+move+"   Time:", round(t2 - t1, 3), "s")
             for ch in move:
                 self.letters_bag[ch] += 1
                 player.hand.remove(ch)
                 self.last_moves_strings[self.move_num % 4] = True
         else:
             if self.board_is_valid(move):
-                print("\n    Move is correct")
+                print("\n\n    Move is correct. Time:", round(t2-t1, 3), "s")
             else:
-                print("Move is incorrect")
+                print("    Move is incorrect")
                 raise ValueError
             player.score += self.compare(self.board, move, player)
             self.board = move
             self.last_moves_strings[self.move_num % 4] = False
         player.hand = self.give_letters(player.hand)
         scrabble_tools.print_board(self.board)
-        print("-------------Player 0:",self.player0.score,"---Player 1:", self.player1.score, "-------------")
+        print("-------------Player 0:", self.player0.score, "---Player 1:", self.player1.score, "-------------")
 
     def compare(self, board, p_board, player):
         """Compares board from player with board, that was originally given to him and returns score"""
@@ -186,7 +203,7 @@ class Game:
                 elif (not is_letter) and len(word) > 1:
                     yield word
                     word = ""
-                elif (not is_letter) and len(word) ==1:
+                elif (not is_letter) and len(word) == 1:
                     word = ""
         rotated_board = list(zip(*board[::-1]))
         rotated_board = [x[::-1] for x in rotated_board]

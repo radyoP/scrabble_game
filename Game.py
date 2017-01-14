@@ -1,5 +1,5 @@
 import scrabble_game
-import sys
+import argparse
 
 
 def load_players(module):
@@ -16,28 +16,46 @@ def load_players(module):
     return player
 
 
+def one_game(args):
+    p0 = load_players(args.player0)
+    p1 = load_players(args.player1)
+    game = scrabble_game.Game(p0, p1, args.ignore_time)
+    game_res = game.play()
+    if game_res == "p0":
+        print("Player0 wins!")
+    elif game_res == "p1":
+        print("Player1 wins!")
+    return game_res
+
+
+def tournament(args):
+    res = {"p0": 0,"p1": 0, "draw": 0}
+    for i in range(args.tournament):
+        res[one_game(args)] += 1
+        print("\n\n--------------------------Player0:", res["p0"], "Player1:", res["p1"], "--------------------------\n\n")
+    return res
+
+
 if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        print("No arguments given, trying to import players from module scrabble_player")
-        try:
-            p0 = load_players("scrabble_player")
-            p1 = load_players("scrabble_player")
-        except NameError:
-            print("No module scrabble_player found. Terminating")
-            exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p0", "--player0", type=str, default="scrabble_player.py", help="Name of module with player one")
+    parser.add_argument("-p1","--player1", type=str, default="scrabble_player.py", help="Name of module with player two")
+    parser.add_argument('-it', '--ignore_time', action="store_true", default=False,
+                        help="Doesn't interrupt game, if players, plays for too long")
+    parser.add_argument("-to","--tournament", type=int, default=0,
+                        help="Runs multiple games")
+    args = parser.parse_args()
 
-    elif len(sys.argv) == 2:
-        print("One argument given, trying to import player form module " + sys.argv[1])
-        p0 = load_players(sys.argv[1])
-        print("Attempting to import second player form 'scrabble_player'")
-        p1 = load_players("scrabble_player")
-
+    if args.player0 == args.player1:
+        print("Trying to import players from "+args.player0)
     else:
-        player1_module = sys.argv[1]
-        player2_module = sys.argv[2]
-        print("Two arguments given, trying to import players form modules " + player1_module+" and "+player2_module)
-        p0 = load_players(player1_module)
-        p1 = load_players(player2_module)
+        print("Trying to import players from "+args.player0+"and "+args.player1)
 
-    game = scrabble_game.Game(p0, p1)
-    game.play()
+    if args.ignore_time:
+        print("Ignoring time")
+    if args.tournament == 0:
+        one_game(args.ignore_time)
+    else:
+        print("Number of iterations:",args.tournament)
+        res = tournament(args)
+        print("\n\nPlayer0:", res["p0"], "Player1:", res["p1"], "\n\n")

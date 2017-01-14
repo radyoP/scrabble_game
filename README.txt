@@ -2,7 +2,7 @@ Simple scrabble game for school project. Should serve as testing enviroment for 
 
 If you run Game.py without any arguments, it will try to find scrabble_player module in directory.
 
-If you whish to run different bots agints each other, just pass them as arguments to Game.py 
+Use Game.py -h for aditional informations
 
 
 
