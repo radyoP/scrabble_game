@@ -100,9 +100,7 @@ class Game:
         self.ignore_time = ignore_time
 
         with open("dictionary.txt", "r") as file:
-            words = list()
-            for line in file:
-                words.append(line[:-1])
+            words = [line[:-1] for line in file]
         self.valid_words = trie.Trie(words)
 
     def play(self):
@@ -132,16 +130,10 @@ class Game:
             return "draw"
 
     def end_of_game(self):
-        if set(self.letters_bag) == {} or (False not in self.last_moves_strings):
-            return True
-        else:
-            return False
+        return set(self.letters_bag) == {} or (False not in self.last_moves_strings)
 
     def other_player(self, player):
-        if player == self.player0:
-            return self.player1
-        else:
-            return self.player0
+        return self.player1 if player == self.player0 else self.player0
 
     def move(self, player):
         t1 = time.time()
